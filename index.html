@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Tap Bola</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .panel {
+      background: #1e293b;
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+
+    .info {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .badge {
+      background: #334155;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-weight: bold;
+      flex: 1;
+      text-align: center;
+      min-width: 90px;
+    }
+
+    #startBtn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: #22c55e;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    #gameArea {
+      position: relative;
+      width: 100%;
+      height: 55vh;
+      min-height: 320px;
+      max-height: 480px;
+      background: linear-gradient(#7dd3fc, #e0f2fe);
+      border-radius: 16px;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    #target {
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: none;
+      background: #ef4444;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+      display: none;
+    }
+
+    #message {
+      margin-top: 12px;
+      text-align: center;
+      color: #e2e8f0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Game Tap Bola</h1>
+
+    <div class="panel">
+      <div class="info">
+        <div class="badge">Skor: <span id="score">0</span></div>
+        <div class="badge">Waktu: <span id="time">20</span></div>
+        <div class="badge">Best: <span id="best">0</span></div>
+      </div>
+
+      <button id="startBtn">Mulai Game</button>
+
+      <div id="gameArea">
+        <button id="target" aria-label="Target"></button>
+      </div>
+
+      <div id="message">
+        Tekan "Mulai Game", lalu tap bola merah secepat mungkin.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const scoreEl = document.getElementById("score");
+    const timeEl = document.getElementById("time");
+    const bestEl = document.getElementById("best");
+    const startBtn = document.getElementById("startBtn");
+    const gameArea = document.getElementById("gameArea");
+    const target = document.getElementById("target");
+    const messageEl = document.getElementById("message");
+
+    let score = 0;
+    let timeLeft = 20;
+    let timer = null;
+    let playing = false;
+
+    let best = Number(localStorage.getItem("bestTapScore") || 0);
+    bestEl.textContent = best;
+
+    function updateUI() {
+      scoreEl.textContent = score;
+      timeEl.textContent = timeLeft;
+      bestEl.textContent = best;
+    }
+
+    function moveTarget() {
+      const size = 72;
+      const maxX = gameArea.clientWidth - size;
+      const maxY = gameArea.clientHeight - size;
+
+      const x = Math.random() * maxX;
+      const y = Math.random() * maxY;
+
+      target.style.left = x + "px";
+      target.style.top = y + "px";
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 20;
+      playing = true;
+      updateUI();
+
+      startBtn.disabled = true;
+      startBtn.textContent = "Sedang bermain...";
+      target.style.display = "block";
+      messageEl.textContent = "Ayo, tap bola merah secepat mungkin!";
+      moveTarget();
+
+      clearInterval(timer);
+      timer = setInterval(() => {
+        timeLeft--;
+        updateUI();
+
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      playing = false;
+      clearInterval(timer);
+      target.style.display = "none";
+      startBtn.disabled = false;
+      startBtn.textContent = "Main Lagi";
+
+      if (score > best) {
+        best = score;
+        localStorage.setItem("bestTapScore", best);
+      }
+
+      updateUI();
+      messageEl.textContent = "Waktu habis! Skor kamu: " + score;
+    }
+
+    target.addEventListener("click", function(e) {
+      e.preventDefault();
+      if (!playing) return;
+      score++;
+      updateUI();
+      moveTarget();
+    });
+
+    startBtn.addEventListener("click", startGame);
+
+    window.addEventListener("resize", function() {
+      if (playing) moveTarget();
+    });
+  </script>
+</body>
+</html>
